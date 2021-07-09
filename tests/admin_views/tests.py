@@ -3624,8 +3624,9 @@ class AdminSearchTest(TestCase):
         """
         #   1 query for session + 1 for fetching user
         # + 1 for filtered result + 1 for filtered count
-        # + 1 for total count
-        with self.assertNumQueries(5):
+        # + 1 for total count + 1 for savepoint
+        # + 1 for release savepoint
+        with self.assertNumQueries(7):
             response = self.client.get(reverse('admin:admin_views_person_changelist') + '?q=Gui')
         self.assertContains(
             response,
@@ -3640,7 +3641,8 @@ class AdminSearchTest(TestCase):
         """
         #   1 query for session + 1 for fetching user
         # + 1 for filtered result + 1 for filtered count
-        with self.assertNumQueries(4):
+        # + 1 for savepoint + 1 for release savepoint
+        with self.assertNumQueries(6):
             response = self.client.get(reverse('admin:admin_views_recommendation_changelist') + '?q=bar')
         self.assertContains(
             response,
@@ -3832,23 +3834,24 @@ class AdminCustomQuerysetTest(TestCase):
         Person.objects.create(name='person2', gender=2)
         changelist_url = reverse('admin:admin_views_person_changelist')
 
-        # 5 queries are expected: 1 for the session, 1 for the user,
-        # 2 for the counts and 1 for the objects on the page
-        with self.assertNumQueries(5):
+        # 7 queries are expected: 1 for the session, 1 for the user,
+        # 2 for the counts, 1 for the objects on the page,
+        # 1 for savepoint and 1 for release savepoint
+        with self.assertNumQueries(7):
             resp = self.client.get(changelist_url)
             self.assertEqual(resp.context['selection_note'], '0 of 2 selected')
             self.assertEqual(resp.context['selection_note_all'], 'All 2 selected')
-        with self.assertNumQueries(5):
+        with self.assertNumQueries(7):
             extra = {'q': 'not_in_name'}
             resp = self.client.get(changelist_url, extra)
             self.assertEqual(resp.context['selection_note'], '0 of 0 selected')
             self.assertEqual(resp.context['selection_note_all'], 'All 0 selected')
-        with self.assertNumQueries(5):
+        with self.assertNumQueries(7):
             extra = {'q': 'person'}
             resp = self.client.get(changelist_url, extra)
             self.assertEqual(resp.context['selection_note'], '0 of 2 selected')
             self.assertEqual(resp.context['selection_note_all'], 'All 2 selected')
-        with self.assertNumQueries(5):
+        with self.assertNumQueries(7):
             extra = {'gender__exact': '1'}
             resp = self.client.get(changelist_url, extra)
             self.assertEqual(resp.context['selection_note'], '0 of 1 selected')

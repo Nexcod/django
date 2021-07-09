@@ -1692,6 +1692,10 @@ class ModelAdmin(BaseModelAdmin):
 
     @csrf_protect_m
     def changelist_view(self, request, extra_context=None):
+        with transaction.atomic(using=router.db_for_write(self.model)):
+            return self._changelist_view(request, extra_context)
+
+    def _changelist_view(self, request, extra_context=None):
         """
         The 'change list' admin view for this model.
         """

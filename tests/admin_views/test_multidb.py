@@ -67,6 +67,15 @@ class MultiDatabaseTests(TestCase):
                 mock.atomic.assert_called_with(using=db)
 
     @mock.patch('django.contrib.admin.options.transaction')
+    def test_changelist_view(self, mock):
+        for db in self.databases:
+            with self.subTest(db=db):
+                Router.target_db = db
+                self.client.force_login(self.superusers[db])
+                self.client.post(reverse('test_adminsite:admin_views_book_changelist'))
+                mock.atomic.assert_called_with(using=db)
+
+    @mock.patch('django.contrib.admin.options.transaction')
     def test_delete_view(self, mock):
         for db in self.databases:
             with self.subTest(db=db):
